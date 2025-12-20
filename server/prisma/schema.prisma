@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  GUEST
+  MEMBER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      UserRole @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+  reviews  Review[]
+}
+
+model Movie {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  duration    Int      // minutes
+  genre       String
+  rating      Float    @default(0)
+  posterUrl   String
+  trailerUrl  String
+  releaseDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  showtimes Showtime[]
+  reviews   Review[]
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  rows      Int      @default(10)
+  seatsPerRow Int    @default(12)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  showtimes Showtime[]
+}
+
+model Showtime {
+  id        String   @id @default(uuid())
+  movieId   String
+  roomId    String
+  startTime DateTime
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movie    Movie     @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  room     Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  userId     String
+  showtimeId String
+  seats      String        // JSON array of seat positions like ["A1", "A2"]
+  totalPrice Float
+  status     BookingStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showtime Showtime @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  movieId   String
+  rating    Int      // 1-5 stars
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+}
