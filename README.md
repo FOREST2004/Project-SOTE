@@ -113,11 +113,11 @@ docker-compose up --build
 
 **Admin:**
 - Email: admin@cinema.vn
-- Password: 123456
+- Password: 1234567890
 
 **Member:**
 - Email: nguyen.van.an@email.vn
-- Password: 123456
+- Password: 1234567890
 
 ### Cách chạy local (Development)
 
