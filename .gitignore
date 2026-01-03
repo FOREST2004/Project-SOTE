@@ -31,3 +31,6 @@ server/prisma/migrations/
 
 # Docker
 *.sql
+create_test_cases.py
+Login_Test_Cases.xlsx
+Whitebox_Testing_Login.md
