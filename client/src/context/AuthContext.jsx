@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       const response = await api.get('/auth/me');
-      setUser(response.data.user);
+      setUser(response.data.data.user);
     } catch (error) {
       localStorage.removeItem('token');
       delete api.defaults.headers.common['Authorization'];
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
-    const { user, token } = response.data;
+    const { user, token } = response.data.data;
     localStorage.setItem('token', token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(user);
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password, fullName) => {
     const response = await api.post('/auth/register', { email, password, fullName });
-    const { user, token } = response.data;
+    const { user, token } = response.data.data;
     localStorage.setItem('token', token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(user);

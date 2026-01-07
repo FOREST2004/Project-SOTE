@@ -22,4 +22,14 @@ export const moviesController = {
       res.status(500).json({ error: 'Failed to fetch movie' });
     }
   },
+
+  async getTrendingMovies(req, res) {
+    try {
+      const limit = parseInt(req.query.limit) || 10;
+      const movies = await moviesService.getTrendingMovies(limit);
+      res.json(movies);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch trending movies' });
+    }
+  },
 };

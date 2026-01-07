@@ -4,14 +4,28 @@ import MovieCard from '../components/MovieCard';
 
 function Home() {
   const [movies, setMovies] = useState([]);
+  const [trendingMovies, setTrendingMovies] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
   const [sortBy, setSortBy] = useState('release-newest');
   const [loading, setLoading] = useState(true);
+  const [trendingLoading, setTrendingLoading] = useState(true);
 
   useEffect(() => {
     fetchMovies();
+    fetchTrendingMovies();
   }, [search, selectedGenre, sortBy]);
+
+  const fetchTrendingMovies = async () => {
+    try {
+      const response = await api.get('/movies/trending', { params: { limit: 5 } });
+      setTrendingMovies(response.data);
+    } catch (error) {
+      console.error('Failed to fetch trending movies:', error);
+    } finally {
+      setTrendingLoading(false);
+    }
+  };
 
   const fetchMovies = async () => {
     try {
@@ -33,6 +47,18 @@ function Home() {
 
   return (
     <div className="container">
+      {/* Trending Movies Section */}
+      {!trendingLoading && trendingMovies.length > 0 && (
+        <div className="trending-section">
+          <h2>🔥 Trending Movies</h2>
+          <div className="trending-grid">
+            {trendingMovies.map((movie) => (
+              <MovieCard key={movie.id} movie={movie} showBookingCount={true} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <h1>Now Showing</h1>
 
       <div className="filters">

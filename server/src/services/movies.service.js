@@ -100,6 +100,14 @@ export const moviesService = {
           },
           include: {
             room: true,
+            bookings: {
+              where: {
+                status: 'CONFIRMED',
+              },
+              select: {
+                seats: true,
+              },
+            },
           },
           orderBy: { startTime: 'asc' },
         },
@@ -110,6 +118,83 @@ export const moviesService = {
       throw new Error('Movie not found');
     }
 
-    return movie;
+    // Add seat availability info to showtimes
+    const showtimesWithAvailability = movie.showtimes.map(showtime => {
+      const bookedSeats = showtime.bookings.flatMap(booking =>
+        JSON.parse(booking.seats)
+      );
+      const totalSeats = showtime.room.rows * showtime.room.seatsPerRow;
+      const bookedSeatsCount = bookedSeats.length;
+      const availableSeats = totalSeats - bookedSeatsCount;
+
+      const { bookings, ...showtimeData } = showtime;
+      return {
+        ...showtimeData,
+        totalSeats,
+        bookedSeatsCount,
+        availableSeats,
+      };
+    });
+
+    return {
+      ...movie,
+      showtimes: showtimesWithAvailability,
+    };
+  },
+
+  async getTrendingMovies(limit = 10) {
+    // Get all movies with their booking counts
+    const movies = await prisma.movie.findMany({
+      include: {
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+        showtimes: {
+          where: {
+            startTime: {
+              gte: new Date(),
+            },
+          },
+          include: {
+            bookings: {
+              where: {
+                status: 'CONFIRMED',
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Calculate booking count and average rating for each movie
+    const moviesWithStats = movies.map(movie => {
+      const bookingCount = movie.showtimes.reduce(
+        (total, showtime) => total + showtime.bookings.length,
+        0
+      );
+
+      const avgRating = movie.reviews.length > 0
+        ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length
+        : 0;
+
+      const { reviews, showtimes, ...movieData } = movie;
+      return {
+        ...movieData,
+        rating: Number(avgRating.toFixed(1)),
+        reviewCount: reviews.length,
+        bookingCount,
+        showtimes: showtimes.map(st => {
+          const { bookings, ...stData } = st;
+          return stData;
+        }),
+      };
+    });
+
+    // Sort by booking count (most popular first) and limit results
+    return moviesWithStats
+      .sort((a, b) => b.bookingCount - a.bookingCount)
+      .slice(0, limit);
   },
 };

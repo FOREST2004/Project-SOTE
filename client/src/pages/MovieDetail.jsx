@@ -89,6 +89,17 @@ function MovieDetail() {
                   <div className="showtime-price">
                     {showtime.price.toLocaleString('vi-VN')} VND
                   </div>
+                  {showtime.availableSeats !== undefined && (
+                    <div className="showtime-seats">
+                      {showtime.availableSeats > 0 ? (
+                        <span className="seats-available">
+                          {showtime.availableSeats}/{showtime.totalSeats} seats available
+                        </span>
+                      ) : (
+                        <span className="seats-full">No seats available</span>
+                      )}
+                    </div>
+                  )}
                 </Link>
               ))}
             </div>

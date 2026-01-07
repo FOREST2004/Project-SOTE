@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom';
 
-function MovieCard({ movie }) {
+function MovieCard({ movie, showBookingCount = false }) {
   return (
     <Link to={`/movie/${movie.id}`} className="movie-card">
       <div className="movie-poster">
         <img src={movie.posterUrl} alt={movie.title} />
+        {showBookingCount && movie.bookingCount !== undefined && (
+          <div className="booking-badge">
+            🎟️ {movie.bookingCount} bookings
+          </div>
+        )}
       </div>
       <div className="movie-info">
         <h3>{movie.title}</h3>
