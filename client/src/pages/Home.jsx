@@ -6,17 +6,19 @@ function Home() {
   const [movies, setMovies] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
+  const [sortBy, setSortBy] = useState('release-newest');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMovies();
-  }, [search, selectedGenre]);
+  }, [search, selectedGenre, sortBy]);
 
   const fetchMovies = async () => {
     try {
       const params = {};
       if (search) params.search = search;
       if (selectedGenre) params.genre = selectedGenre;
+      if (sortBy) params.sortBy = sortBy;
 
       const response = await api.get('/movies', { params });
       setMovies(response.data);
@@ -53,6 +55,19 @@ function Home() {
               {genre}
             </option>
           ))}
+        </select>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="sort-select"
+        >
+          <option value="release-newest">Newest Release</option>
+          <option value="release-oldest">Oldest Release</option>
+          <option value="rating-highest">Highest Rating</option>
+          <option value="rating-lowest">Lowest Rating</option>
+          <option value="title-asc">Title A-Z</option>
+          <option value="title-desc">Title Z-A</option>
         </select>
       </div>
 
