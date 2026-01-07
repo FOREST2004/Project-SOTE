@@ -3,8 +3,8 @@ import { moviesService } from '../services/movies.service.js';
 export const moviesController = {
   async getAllMovies(req, res) {
     try {
-      const { search, genre } = req.query;
-      const movies = await moviesService.getAllMovies(search, genre);
+      const { search, genre, sortBy } = req.query;
+      const movies = await moviesService.getAllMovies(search, genre, sortBy);
       res.json(movies);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch movies' });
