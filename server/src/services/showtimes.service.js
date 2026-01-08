@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -11,7 +11,7 @@ export const showtimesService = {
         room: true,
         bookings: {
           where: {
-            status: 'CONFIRMED',
+            status: "CONFIRMED",
           },
           select: {
             seats: true,
@@ -21,18 +21,16 @@ export const showtimesService = {
     });
 
     if (!showtime) {
-      throw new Error('Showtime not found');
+      throw new Error("Showtime not found");
     }
 
-    // Get all booked seats
-    const bookedSeats = showtime.bookings.flatMap(booking =>
+    const bookedSeats = showtime.bookings.flatMap((booking) =>
       JSON.parse(booking.seats)
     );
 
-    // Calculate seat availability
     const totalSeats = showtime.room.rows * showtime.room.seatsPerRow;
     const bookedSeatsCount = bookedSeats.length;
-    const availableSeats = totalSeats - bookedSeatsCount;
+    const availableSeats = totalSeats - bookedSeatsCount + 1;
 
     const { bookings, ...showtimeData } = showtime;
     return {

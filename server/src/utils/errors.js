@@ -1,5 +1,3 @@
-// Custom Error Classes for better error handling and testing
-
 export class AppError extends Error {
   constructor(message, statusCode) {
     super(message);
@@ -12,41 +10,41 @@ export class AppError extends Error {
 export class ValidationError extends AppError {
   constructor(message) {
     super(message, 400);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(resource) {
     super(`${resource} not found`, 404);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Unauthorized') {
+  constructor(message = "Unauthorized") {
     super(message, 401);
-    this.name = 'UnauthorizedError';
+    this.name = "UnauthorizedError";
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Forbidden') {
+  constructor(message = "Forbidden") {
     super(message, 403);
-    this.name = 'ForbiddenError';
+    this.name = "ForbiddenError";
   }
 }
 
 export class ConflictError extends AppError {
   constructor(message) {
     super(message, 409);
-    this.name = 'ConflictError';
+    this.name = "ConflictError";
   }
 }
 
 export class BadRequestError extends AppError {
   constructor(message) {
     super(message, 400);
-    this.name = 'BadRequestError';
+    this.name = "BadRequestError";
   }
 }

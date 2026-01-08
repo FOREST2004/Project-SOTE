@@ -1,4 +1,4 @@
-import { moviesService } from '../services/movies.service.js';
+import { moviesService } from "../services/movies.service.js";
 
 export const moviesController = {
   async getAllMovies(req, res) {
@@ -7,7 +7,7 @@ export const moviesController = {
       const movies = await moviesService.getAllMovies(search, genre, sortBy);
       res.json(movies);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch movies' });
+      res.status(500).json({ error: "Failed to fetch movies" });
     }
   },
 
@@ -16,10 +16,10 @@ export const moviesController = {
       const movie = await moviesService.getMovieById(req.params.id);
       res.json(movie);
     } catch (error) {
-      if (error.message === 'Movie not found') {
+      if (error.message === "Movie not found") {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: 'Failed to fetch movie' });
+      res.status(500).json({ error: "Failed to fetch movie" });
     }
   },
 
@@ -29,7 +29,7 @@ export const moviesController = {
       const movies = await moviesService.getTrendingMovies(limit);
       res.json(movies);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch trending movies' });
+      res.status(500).json({ error: "Failed to fetch trending movies" });
     }
   },
 };

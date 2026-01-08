@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -8,8 +8,8 @@ export const moviesService = {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -17,17 +17,16 @@ export const moviesService = {
       where.genre = genre;
     }
 
-    // Determine orderBy based on sortBy parameter
-    let orderBy = { releaseDate: 'desc' }; // default
+    let orderBy = { releaseDate: "desc" };
 
-    if (sortBy === 'title-asc') {
-      orderBy = { title: 'asc' };
-    } else if (sortBy === 'title-desc') {
-      orderBy = { title: 'desc' };
-    } else if (sortBy === 'release-newest') {
-      orderBy = { releaseDate: 'desc' };
-    } else if (sortBy === 'release-oldest') {
-      orderBy = { releaseDate: 'asc' };
+    if (sortBy === "title-asc") {
+      orderBy = { title: "asc" };
+    } else if (sortBy === "title-desc") {
+      orderBy = { title: "desc" };
+    } else if (sortBy === "release-newest") {
+      orderBy = { releaseDate: "desc" };
+    } else if (sortBy === "release-oldest") {
+      orderBy = { releaseDate: "asc" };
     }
 
     const movies = await prisma.movie.findMany({
@@ -54,11 +53,12 @@ export const moviesService = {
       orderBy,
     });
 
-    // Calculate average rating
-    let processedMovies = movies.map(movie => {
-      const avgRating = movie.reviews.length > 0
-        ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length
-        : 0;
+    let processedMovies = movies.map((movie) => {
+      const avgRating =
+        movie.reviews.length > 0
+          ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            movie.reviews.length
+          : 0;
 
       const { reviews, ...movieData } = movie;
       return {
@@ -68,10 +68,9 @@ export const moviesService = {
       };
     });
 
-    // Sort by rating if requested (must be done after calculating average)
-    if (sortBy === 'rating-highest') {
+    if (sortBy === "rating-highest") {
       processedMovies.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'rating-lowest') {
+    } else if (sortBy === "rating-lowest") {
       processedMovies.sort((a, b) => a.rating - b.rating);
     }
 
@@ -90,7 +89,7 @@ export const moviesService = {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
         showtimes: {
           where: {
@@ -102,25 +101,24 @@ export const moviesService = {
             room: true,
             bookings: {
               where: {
-                status: 'CONFIRMED',
+                status: "CONFIRMED",
               },
               select: {
                 seats: true,
               },
             },
           },
-          orderBy: { startTime: 'asc' },
+          orderBy: { startTime: "asc" },
         },
       },
     });
 
     if (!movie) {
-      throw new Error('Movie not found');
+      throw new Error("Movie not found");
     }
 
-    // Add seat availability info to showtimes
-    const showtimesWithAvailability = movie.showtimes.map(showtime => {
-      const bookedSeats = showtime.bookings.flatMap(booking =>
+    const showtimesWithAvailability = movie.showtimes.map((showtime) => {
+      const bookedSeats = showtime.bookings.flatMap((booking) =>
         JSON.parse(booking.seats)
       );
       const totalSeats = showtime.room.rows * showtime.room.seatsPerRow;
@@ -143,7 +141,6 @@ export const moviesService = {
   },
 
   async getTrendingMovies(limit = 10) {
-    // Get all movies with their booking counts
     const movies = await prisma.movie.findMany({
       include: {
         reviews: {
@@ -160,7 +157,7 @@ export const moviesService = {
           include: {
             bookings: {
               where: {
-                status: 'CONFIRMED',
+                status: "CONFIRMED",
               },
             },
           },
@@ -168,16 +165,17 @@ export const moviesService = {
       },
     });
 
-    // Calculate booking count and average rating for each movie
-    const moviesWithStats = movies.map(movie => {
+    const moviesWithStats = movies.map((movie) => {
       const bookingCount = movie.showtimes.reduce(
         (total, showtime) => total + showtime.bookings.length,
         0
       );
 
-      const avgRating = movie.reviews.length > 0
-        ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length
-        : 0;
+      const avgRating =
+        movie.reviews.length > 0
+          ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            movie.reviews.length
+          : 0;
 
       const { reviews, showtimes, ...movieData } = movie;
       return {
@@ -185,14 +183,13 @@ export const moviesService = {
         rating: Number(avgRating.toFixed(1)),
         reviewCount: reviews.length,
         bookingCount,
-        showtimes: showtimes.map(st => {
+        showtimes: showtimes.map((st) => {
           const { bookings, ...stData } = st;
           return stData;
         }),
       };
     });
 
-    // Sort by booking count (most popular first) and limit results
     return moviesWithStats
       .sort((a, b) => b.bookingCount - a.bookingCount)
       .slice(0, limit);

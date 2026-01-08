@@ -1,23 +1,21 @@
-import { adminService } from '../services/admin.service.js';
+import { adminService } from "../services/admin.service.js";
 
 export const adminController = {
-  // Revenue
   async getRevenue(req, res) {
     try {
       const revenue = await adminService.getRevenue();
       res.json(revenue);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch revenue data' });
+      res.status(500).json({ error: "Failed to fetch revenue data" });
     }
   },
 
-  // Movies
   async getAllMovies(req, res) {
     try {
       const movies = await adminService.getAllMovies();
       res.json(movies);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch movies' });
+      res.status(500).json({ error: "Failed to fetch movies" });
     }
   },
 
@@ -26,7 +24,7 @@ export const adminController = {
       const movie = await adminService.createMovie(req.body);
       res.json(movie);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create movie' });
+      res.status(500).json({ error: "Failed to create movie" });
     }
   },
 
@@ -35,7 +33,7 @@ export const adminController = {
       const movie = await adminService.updateMovie(req.params.id, req.body);
       res.json(movie);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update movie' });
+      res.status(500).json({ error: "Failed to update movie" });
     }
   },
 
@@ -44,17 +42,16 @@ export const adminController = {
       const result = await adminService.deleteMovie(req.params.id);
       res.json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to delete movie' });
+      res.status(500).json({ error: "Failed to delete movie" });
     }
   },
 
-  // Rooms
   async getAllRooms(req, res) {
     try {
       const rooms = await adminService.getAllRooms();
       res.json(rooms);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch rooms' });
+      res.status(500).json({ error: "Failed to fetch rooms" });
     }
   },
 
@@ -63,7 +60,7 @@ export const adminController = {
       const room = await adminService.createRoom(req.body);
       res.json(room);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create room' });
+      res.status(500).json({ error: "Failed to create room" });
     }
   },
 
@@ -72,17 +69,16 @@ export const adminController = {
       const room = await adminService.updateRoom(req.params.id, req.body);
       res.json(room);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update room' });
+      res.status(500).json({ error: "Failed to update room" });
     }
   },
 
-  // Showtimes
   async getAllShowtimes(req, res) {
     try {
       const showtimes = await adminService.getAllShowtimes();
       res.json(showtimes);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch showtimes' });
+      res.status(500).json({ error: "Failed to fetch showtimes" });
     }
   },
 
@@ -91,7 +87,7 @@ export const adminController = {
       const showtime = await adminService.createShowtime(req.body);
       res.json(showtime);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create showtime' });
+      res.status(500).json({ error: "Failed to create showtime" });
     }
   },
 
@@ -100,7 +96,7 @@ export const adminController = {
       const result = await adminService.deleteShowtime(req.params.id);
       res.json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to delete showtime' });
+      res.status(500).json({ error: "Failed to delete showtime" });
     }
   },
 };

@@ -1,65 +1,87 @@
-import { PrismaClient } from '@prisma/client';
-import { NotFoundError, BadRequestError, ForbiddenError, ConflictError } from '../utils/errors.js';
+import { PrismaClient } from "@prisma/client";
+import {
+  NotFoundError,
+  BadRequestError,
+  ForbiddenError,
+  ConflictError,
+} from "../utils/errors.js";
 
 const prisma = new PrismaClient();
 
 export const bookingsService = {
   async createBooking(userId, showtimeId, seats) {
+    if (!seats || seats.length === 0) {
+      throw new BadRequestError("At least one seat is required");
+    }
 
-    // Get showtime and check if it exists
+    const seatRegex = /^[A-Z]\d+$/;
+    const invalidFormatSeats = seats.filter((seat) => !seatRegex.test(seat));
+    if (invalidFormatSeats.length > 0) {
+      throw new BadRequestError(
+        `Invalid seat format: ${invalidFormatSeats.join(", ")}`
+      );
+    }
+
+    const uniqueSeats = new Set(seats);
+    if (uniqueSeats.size !== seats.length) {
+      throw new BadRequestError("Duplicate seats in request");
+    }
+
     const showtime = await prisma.showtime.findUnique({
       where: { id: showtimeId },
       include: {
         room: true,
         bookings: {
-          where: { status: 'CONFIRMED' },
+          where: { status: "CONFIRMED" },
           select: { seats: true },
         },
       },
     });
 
     if (!showtime) {
-      throw new NotFoundError('Showtime');
+      throw new NotFoundError("Showtime");
     }
 
-    // Check if showtime is in the past
     if (new Date(showtime.startTime) < new Date()) {
-      throw new BadRequestError('Cannot book seats for past showtimes');
+      throw new BadRequestError("Cannot book seats for past showtimes");
     }
 
-    // Get all booked seats
-    const bookedSeats = showtime.bookings.flatMap(b => JSON.parse(b.seats));
+    const bookedSeats = showtime.bookings.flatMap((b) => JSON.parse(b.seats));
 
-    // Check if requested seats are already booked
-    const conflictSeats = seats.filter(seat => bookedSeats.includes(seat));
+    const conflictSeats = seats.filter((seat) => bookedSeats.includes(seat));
     if (conflictSeats.length > 0) {
-      throw new ConflictError(`Seats already booked: ${conflictSeats.join(', ')}`);
+      throw new ConflictError(
+        `Seats already booked: ${conflictSeats.join(", ")}`
+      );
     }
 
-    // Validate seat existence in room (check if seats are within room bounds)
     const totalSeats = showtime.room.rows * showtime.room.seatsPerRow;
-    const invalidSeats = seats.filter(seat => {
+    const invalidSeats = seats.filter((seat) => {
       const row = seat.charAt(0);
       const seatNum = parseInt(seat.substring(1));
-      const rowIndex = row.charCodeAt(0) - 65; // A=0, B=1, etc.
-      return rowIndex >= showtime.room.rows || seatNum > showtime.room.seatsPerRow || seatNum < 1;
+      const rowIndex = row.charCodeAt(0) - 65;
+      return (
+        rowIndex >= showtime.room.rows ||
+        seatNum > showtime.room.seatsPerRow ||
+        seatNum < 1
+      );
     });
 
     if (invalidSeats.length > 0) {
-      throw new BadRequestError(`Invalid seats for this room: ${invalidSeats.join(', ')}`);
+      throw new BadRequestError(
+        `Invalid seats for this room: ${invalidSeats.join(", ")}`
+      );
     }
 
-    // Calculate total price
     const totalPrice = showtime.price * seats.length;
 
-    // Create booking
     const booking = await prisma.booking.create({
       data: {
         userId,
         showtimeId,
         seats: JSON.stringify(seats),
         totalPrice,
-        status: 'CONFIRMED',
+        status: "CONFIRMED",
       },
       include: {
         showtime: {
@@ -85,14 +107,13 @@ export const bookingsService = {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     return bookings;
   },
 
   async cancelBooking(bookingId, userId) {
-    // Find booking
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
@@ -101,30 +122,26 @@ export const bookingsService = {
     });
 
     if (!booking) {
-      throw new NotFoundError('Booking');
+      throw new NotFoundError("Booking");
     }
 
-    // Check authorization
+    if (booking.status === "CANCELLED") {
+      throw new BadRequestError("Booking is already cancelled");
+    }
+
     if (booking.userId !== userId) {
-      throw new ForbiddenError('You can only cancel your own bookings');
+      throw new ForbiddenError("You can only cancel your own bookings");
     }
 
-    // Check if booking is already cancelled
-    if (booking.status === 'CANCELLED') {
-      throw new BadRequestError('Booking is already cancelled');
-    }
-
-    // Check if showtime has passed (optional: prevent cancellation of past bookings)
     if (new Date(booking.showtime.startTime) < new Date()) {
-      throw new BadRequestError('Cannot cancel bookings for past showtimes');
+      throw new BadRequestError("Cannot cancel bookings for past showtimes");
     }
 
-    // Cancel booking
     await prisma.booking.update({
       where: { id: bookingId },
-      data: { status: 'CANCELLED' },
+      data: { status: "CANCELLED" },
     });
 
-    return { message: 'Booking cancelled successfully' };
+    return { message: "Booking cancelled successfully" };
   },
 };

@@ -1,9 +1,22 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import { BadRequestError, NotFoundError } from "../utils/errors.js";
 
 const prisma = new PrismaClient();
 
 export const reviewsService = {
   async createOrUpdateReview(userId, movieId, rating, comment) {
+    if (typeof rating !== "number" || isNaN(rating)) {
+      throw new BadRequestError("Rating must be a number");
+    }
+
+    const movie = await prisma.movie.findUnique({
+      where: { id: movieId },
+    });
+
+    if (!movie) {
+      throw new NotFoundError("Movie");
+    }
+
     return await prisma.review.upsert({
       where: {
         userId_movieId: {
@@ -34,7 +47,7 @@ export const reviewsService = {
           select: { fullName: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   },
 };

@@ -1,5 +1,5 @@
-import { authService } from '../services/auth.service.js';
-import { AppError } from '../utils/errors.js';
+import { authService } from "../services/auth.service.js";
+import { AppError } from "../utils/errors.js";
 
 export const authController = {
   async register(req, res) {
@@ -11,19 +11,19 @@ export const authController = {
       return res.status(201).json({
         success: true,
         data: result,
-        message: 'Registration successful'
+        message: "Registration successful",
       });
     } catch (error) {
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       return res.status(500).json({
         success: false,
-        error: 'Registration failed'
+        error: "Registration failed",
       });
     }
   },
@@ -37,19 +37,19 @@ export const authController = {
       return res.status(200).json({
         success: true,
         data: result,
-        message: 'Login successful'
+        message: "Login successful",
       });
     } catch (error) {
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       return res.status(500).json({
         success: false,
-        error: 'Login failed'
+        error: "Login failed",
       });
     }
   },
@@ -58,13 +58,13 @@ export const authController = {
     try {
       return res.status(200).json({
         success: true,
-        data: { user: req.user }
+        data: { user: req.user },
       });
     } catch (error) {
-      console.error('Get profile error:', error);
+      console.error("Get profile error:", error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch profile'
+        error: "Failed to fetch profile",
       });
     }
   },
@@ -73,24 +73,28 @@ export const authController = {
     try {
       const { fullName, password } = req.body;
 
-      const user = await authService.updateProfile(req.user.id, fullName, password);
+      const user = await authService.updateProfile(
+        req.user.id,
+        fullName,
+        password
+      );
 
       return res.status(200).json({
         success: true,
         data: { user },
-        message: 'Profile updated successfully'
+        message: "Profile updated successfully",
       });
     } catch (error) {
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
-      console.error('Update profile error:', error);
+      console.error("Update profile error:", error);
       return res.status(500).json({
         success: false,
-        error: 'Profile update failed'
+        error: "Profile update failed",
       });
     }
   },

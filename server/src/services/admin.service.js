@@ -1,12 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import { BadRequestError } from "../utils/errors.js";
 
 const prisma = new PrismaClient();
 
 export const adminService = {
-  // Revenue
   async getRevenue() {
     const bookings = await prisma.booking.findMany({
-      where: { status: 'CONFIRMED' },
+      where: { status: "CONFIRMED" },
       include: {
         showtime: {
           include: {
@@ -19,9 +19,8 @@ export const adminService = {
     const totalRevenue = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
     const totalBookings = bookings.length;
 
-    // Group by movie
     const revenueByMovie = {};
-    bookings.forEach(booking => {
+    bookings.forEach((booking) => {
       const movieTitle = booking.showtime.movie.title;
       if (!revenueByMovie[movieTitle]) {
         revenueByMovie[movieTitle] = {
@@ -41,16 +40,32 @@ export const adminService = {
     };
   },
 
-  // Movies
   async getAllMovies() {
     return await prisma.movie.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   },
 
   async createMovie(movieData) {
+    if (!movieData.title || movieData.title.trim() === "") {
+      throw new BadRequestError("Title is required");
+    }
+
+    if (!movieData.description || movieData.description.trim() === "") {
+      throw new BadRequestError("Description is required");
+    }
+
+    if (!movieData.genre || movieData.genre.trim() === "") {
+      throw new BadRequestError("Genre is required");
+    }
+
+    const movieDataWithDate = {
+      ...movieData,
+      releaseDate: new Date(movieData.releaseDate),
+    };
+
     return await prisma.movie.create({
-      data: movieData,
+      data: movieDataWithDate,
     });
   },
 
@@ -65,10 +80,9 @@ export const adminService = {
     await prisma.movie.delete({
       where: { id: movieId },
     });
-    return { message: 'Movie deleted' };
+    return { message: "Movie deleted" };
   },
 
-  // Rooms
   async getAllRooms() {
     return await prisma.room.findMany();
   },
@@ -86,14 +100,13 @@ export const adminService = {
     });
   },
 
-  // Showtimes
   async getAllShowtimes() {
     return await prisma.showtime.findMany({
       include: {
         movie: true,
         room: true,
       },
-      orderBy: { startTime: 'desc' },
+      orderBy: { startTime: "desc" },
     });
   },
 
@@ -111,6 +124,6 @@ export const adminService = {
     await prisma.showtime.delete({
       where: { id: showtimeId },
     });
-    return { message: 'Showtime deleted' };
+    return { message: "Showtime deleted" };
   },
 };

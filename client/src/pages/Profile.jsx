@@ -38,7 +38,7 @@ function Profile() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="profile-form">
+        <form onSubmit={handleSubmit} className="profile-form" noValidate>
           <div className="form-group">
             <label>Full Name</label>
             <input

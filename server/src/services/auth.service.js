@@ -1,57 +1,89 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-import { ConflictError, UnauthorizedError, NotFoundError } from '../utils/errors.js';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+import {
+  ConflictError,
+  UnauthorizedError,
+  NotFoundError,
+  BadRequestError,
+} from "../utils/errors.js";
 
 const prisma = new PrismaClient();
 
 export const authService = {
   async register(email, password, fullName) {
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      throw new ConflictError('Email already registered');
+    if (!email || email.trim() === "") {
+      throw new BadRequestError("Email is required");
     }
 
-    // Hash password and create user
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      throw new BadRequestError("Invalid email format");
+    }
+
+    if (!password || password === "" || password.trim() === "") {
+      throw new BadRequestError("Password is required");
+    }
+
+    if (!fullName || fullName.trim() === "" || fullName.length > 100) {
+      throw new BadRequestError("Full name is required");
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (existingUser) {
+      throw new ConflictError("Email already registered");
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase().trim(),
         password: hashedPassword,
         fullName: fullName.trim(),
-        role: 'MEMBER',
+        role: "MEMBER",
       },
       select: { id: true, email: true, fullName: true, role: true },
     });
 
-    // Generate JWT token
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
+      expiresIn: "7d",
     });
 
     return { user, token };
   },
 
   async login(email, password) {
-    // Find user by email
+    if (!email || email.trim() === "") {
+      throw new BadRequestError("Email is required");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      throw new BadRequestError("Invalid email format");
+    }
+
+    if (!password || password.trim() === "") {
+      throw new BadRequestError("Password is required");
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() }
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError("Invalid credentials");
     }
 
-    // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError("Invalid credentials");
     }
 
-    // Generate JWT token
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
+      expiresIn: "7d",
     });
 
     const { password: _, ...userWithoutPassword } = user;
@@ -65,23 +97,29 @@ export const authService = {
     });
 
     if (!user) {
-      throw new NotFoundError('User');
+      throw new NotFoundError("User");
     }
 
     return user;
   },
 
   async updateProfile(userId, fullName, password) {
-    // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!existingUser) {
-      throw new NotFoundError('User');
+      throw new NotFoundError("User");
     }
 
-    // Build update data
+    if (fullName !== undefined && fullName.trim() === "") {
+      throw new BadRequestError("Full name cannot be empty");
+    }
+
+    if (fullName.length > 100) {
+      throw new BadRequestError("Full name too long");
+    }
+
     const updateData = {};
 
     if (fullName !== undefined) {
@@ -92,7 +130,6 @@ export const authService = {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
-    // Update user
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
