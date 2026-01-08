@@ -263,8 +263,8 @@
 | REG-005 | Empty password | email="test@example.com", password="", fullName="Test" | Status 400, "Password is required" | Invalid | - |
 | REG-006 | Empty fullName | email="test@example.com", password="123456", fullName="" | Status 400, "Full name is required" | Invalid | - |
 | REG-007 | Email with spaces | email=" test@example.com ", password="123456", fullName="Test" | Status 201, email trimmed | Boundary | - |
-| REG-008 | Long fullName (100 chars) | fullName with 100+ characters | ⚠️ Status 201, success (BUG: should reject) | Boundary | **BUG-1** |
-| REG-009 | Password with only spaces | email="test@example.com", password="     " (5 spaces), fullName="Test" | ⚠️ Status 201, user created (BUG: should reject) | Invalid | **BUG-2** |
+| REG-008 | Long fullName (100 chars) | fullName with 100+ characters | Status 400, "Full name must not exceed 100 characters" | Boundary | **BUG-1** |
+| REG-009 | Password with only spaces | email="test@example.com", password="     " (5 spaces), fullName="Test" | Status 400, "Password is required" | Invalid | **BUG-2** |
 | REG-010 | SQL injection attempt | email="test'; DROP TABLE users--" | Status 400, "Invalid email format" | Security | - |
 
 ---
@@ -303,7 +303,7 @@
 | PRO-007 | Update with invalid token | Invalid JWT token | Status 401, "Unauthorized" | Invalid | - |
 | PRO-008 | Update fullName only | password=undefined | Status 200, only name changed | Boundary | - |
 | PRO-009 | Update nothing | Both fields undefined | Status 200, no changes | Boundary | - |
-| PRO-010 | Very long fullName (100 chars) | fullName with 100+ characters | ⚠️ Status 200, updated (BUG: should reject) | Boundary | **BUG-3** |
+| PRO-010 | Very long fullName (100 chars) | fullName with 100+ characters | Status 400, "Full name must not exceed 500 characters" | Boundary | **BUG-3** |
 
 ---
 
@@ -320,13 +320,13 @@
 | BOK-003 | Empty seats array | showtimeId="valid", seats=[] | Status 400, "At least one seat required" | Invalid | - |
 | BOK-004 | Invalid seat format | seats=["ABC", "123"] | Status 400, "Invalid seat format" | Invalid | - |
 | BOK-005 | Seat already booked | seats=["A1"] (A1 already booked) | Status 409, "Seats already booked" | Invalid | - |
-| BOK-006 | Duplicate seats | seats=["A1", "A1"] | ⚠️ Status 200 (BUG: accepts duplicates) | Invalid | **BUG-4** |
+| BOK-006 | Duplicate seats | seats=["A1", "A1"] | Status 400, "Duplicate seats in request" | Invalid | **BUG-4** |
 | BOK-007 | Seats out of bounds | seats=["Z99"] (room only has 10 rows) | Status 400, "Invalid seats for room" | Invalid | - |
 | BOK-008 | Past showtime | showtimeId with startTime < now | Status 400, "Cannot book past showtimes" | Invalid | - |
 | BOK-009 | Book maximum seats | seats=[all 120 available seats] | Status 201, booking created | Boundary | - |
 | BOK-010 | Book single seat | seats=["A1"] | Status 201, booking created | Boundary | - |
 | BOK-011 | Lowercase seat | seats=["a1"] | Status 400, "Invalid seat format" | Boundary | - |
-| BOK-012 | Seat number zero | seats=["A0", "B0"] | ⚠️ Status 201, booking created (BUG: should reject) | Invalid | **BUG-6** |
+| BOK-012 | Seat number zero | seats=["A0", "B0"] | Status 400, "Invalid seats for this room: A0, B0" | Invalid | **BUG-6** |
 | BOK-013 | No authentication | POST without auth token | Status 401, "Unauthorized" | Invalid | - |
 | BOK-014 | Partially booked seats | seats=["A1", "A2"] where A1 is booked | Status 409, "Seats already booked: A1" | Invalid | - |
 | BOK-015 | Special char in seat | seats=["A@1"] | Status 400, "Invalid seat format" | Invalid | - |
@@ -342,7 +342,7 @@
 | CAN-001 | Cancel own booking | bookingId="user's booking" | Status 200, "Booking cancelled successfully" | Valid | - |
 | CAN-002 | Cancel non-existent | bookingId="nonexistent" | Status 404, "Booking not found" | Invalid | - |
 | CAN-003 | Cancel other's booking | bookingId="another user's booking" | Status 403, "You can only cancel your own bookings" | Invalid | - |
-| CAN-004 | Cancel already cancelled | bookingId="already cancelled" | ⚠️ Status 200, "Booking cancelled successfully" (BUG: should be 400) | Invalid | **BUG-5** |
+| CAN-004 | Cancel already cancelled | bookingId="already cancelled" | Status 400, "Booking is already cancelled" | Invalid | **BUG-5** |
 | CAN-005 | Cancel past booking | bookingId with past showtime | Status 400, "Cannot cancel bookings for past showtimes" | Invalid | - |
 | CAN-006 | No authentication | DELETE without token | Status 401, "Unauthorized" | Invalid | - |
 | CAN-007 | Invalid booking ID format | bookingId="invalid-format" | Status 404, "Booking not found" | Invalid | - |
@@ -398,8 +398,8 @@
 | REV-001 | Create valid review | movieId="valid", rating=5, comment="Great!" | Status 201, review created | Valid | - |
 | REV-002 | Rating = 1 (min) | rating=1, comment="Bad" | Status 201, review created | Boundary | - |
 | REV-003 | Rating = 5 (max) | rating=5, comment="Excellent" | Status 201, review created | Boundary | - |
-| REV-004 | Rating > 5 | rating=6, comment="Test" | ⚠️ Status 200 (BUG: accepts rating > 5) | Invalid | **BUG-7** |
-| REV-005 | Rating < 1 | rating=0, comment="Test" | ⚠️ Status 200 (BUG: accepts rating < 1) | Invalid | **BUG-8** |
+| REV-004 | Rating > 5 | rating=6, comment="Test" | Status 400, "Rating must be between 1 and 5" | Invalid | **BUG-7** |
+| REV-005 | Rating < 1 | rating=0, comment="Test" | Status 400, "Rating must be between 1 and 5" | Invalid | **BUG-8** |
 | REV-006 | Non-numeric rating | rating="five", comment="Test" | Status 400, "Rating must be a number" | Invalid | - |
 | REV-007 | No authentication | POST without token | Status 401, "Unauthorized" | Invalid | - |
 | REV-008 | Update existing review | POST again with same movieId | Status 200, review updated (upsert) | Valid | - |
@@ -421,7 +421,7 @@
 | ADM-005 | Create movie (non-admin) | POST with MEMBER token | Status 403, "Forbidden" | Invalid | - |
 | ADM-006 | Get all showtimes | GET /api/admin/showtimes with admin token | Status 200, all showtimes sorted by startTime | Valid | - |
 | ADM-007 | Delete movie | DELETE /api/admin/movies/:id with admin token | Status 200, movie deleted | Valid | - |
-| ADM-008 | Create movie without title | POST /api/admin/movies with title="", description="Test", genre="Action" | ⚠️ Status 201, movie created (BUG: should reject) | Invalid | **BUG-9** |
+| ADM-008 | Create movie without title | POST /api/admin/movies with title="", description="Test", genre="Action" | Status 400, "Title is required" | Invalid | **BUG-9** |
 
 ---
 
